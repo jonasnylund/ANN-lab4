@@ -65,7 +65,6 @@ class RestrictedBoltzmannMachine():
         
         return
 
-        
     def cd1(self,visible_trainset, n_iterations=10000):
         
         """Contrastive Divergence with k=1 full alternating Gibbs sampling
