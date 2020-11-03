@@ -55,10 +55,10 @@ class RestrictedBoltzmannMachine():
         
         self.momentum = 0.7
 
-        self.print_period = 5000
+        self.print_period = 1000
         
         self.rf = { # receptive-fields. Only applicable when visible layer is input data
-            "period" : 5000, # iteration period to visualize
+            "period" : 3000, # iteration period to visualize
             "grid" : [5,5], # size of the grid
             "ids" : np.random.randint(0,self.ndim_hidden,25) # pick some random hidden units
             }
@@ -81,11 +81,22 @@ class RestrictedBoltzmannMachine():
 
         for it in range(n_iterations):
 
-	    # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
+            #[TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
             # you may need to use the inference functions 'get_h_given_v' and 'get_v_given_h'.
             # note that inference methods returns both probabilities and activations (samples from probablities) and you may have to decide when to use what.
-
+            it_mod = int(np.mod(it,visible_trainset.shape[0]/self.batch_size))
+            batch_data = visible_trainset[it_mod*self.batch_size:(it_mod+1)*self.batch_size]
+            p, h_0 = self.get_h_given_v(batch_data)
+            h_n = h_0
+            v_n = batch_data
+            
+            for k in range(1):
+                p, v_n = self.get_v_given_h(h_n)
+                p, h_n = self.get_h_given_v(v_n)
+        
             # [TODO TASK 4.1] update the parameters using function 'update_params'
+            
+            self.update_params(batch_data, h_0, v_n, h_n)
             
             # visualize once in a while when visible layer is input images
             
@@ -97,7 +108,7 @@ class RestrictedBoltzmannMachine():
             
             if it % self.print_period == 0 :
 
-                print ("iteration=%7d recon_loss=%4.4f"%(it, np.linalg.norm(visible_trainset - visible_trainset)))
+                print ("iteration=%7d recon_loss=%4.4f"%(it, np.linalg.norm( batch_data-v_n)))
         
         return
     
@@ -118,13 +129,17 @@ class RestrictedBoltzmannMachine():
 
         # [TODO TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
         
-        self.delta_bias_v += 0
-        self.delta_weight_vh += 0
-        self.delta_bias_h += 0
+        self.delta_bias_v = np.sum(v_0 - v_k)
+        self.delta_weight_vh = np.dot(np.transpose(v_0),h_0) - np.dot(np.transpose(v_k),h_k)
+        self.delta_bias_h = np.sum(h_0 - h_k)
         
-        self.bias_v += self.delta_bias_v
-        self.weight_vh += self.delta_weight_vh
-        self.bias_h += self.delta_bias_h
+        #self.delta_bias_v += 0
+        #self.delta_weight_vh += 0
+        #self.delta_bias_h += 0
+        
+        self.bias_v +=  self.learning_rate*self.delta_bias_v
+        self.weight_vh +=  self.learning_rate*self.delta_weight_vh
+        self.bias_h +=  self.learning_rate*self.delta_bias_h
         
         return
 
@@ -146,9 +161,15 @@ class RestrictedBoltzmannMachine():
         n_samples = visible_minibatch.shape[0]
 
         # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of hidden layer (replace the zeros below) 
-        
-        return np.zeros((n_samples,self.ndim_hidden)), np.zeros((n_samples,self.ndim_hidden))
-
+        #print(self.weight_vh.shape,visible_minibatch.shape, self.bias_h.shape)
+        #print(self.ndim_visible,self.ndim_hidden)
+        p = 1/(1+np.exp(-(self.bias_h + (np.dot(visible_minibatch, self.weight_vh)))))
+        #rand = np.random.random(p.shape)
+        #h = np.zeros((n_samples,self.ndim_hidden))
+        #h = np.abs(np.ceil(p-rand))
+        #return np.zeros((n_samples,self.ndim_hidden)), np.zeros((n_samples,self.ndim_hidden))
+        h = sample_binary(p)
+        return p, h
 
     def get_v_given_h(self,hidden_minibatch):
         
@@ -184,10 +205,16 @@ class RestrictedBoltzmannMachine():
         else:
                         
             # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass and zeros below)             
-
-            pass
+            #p = 1/(1+np.exp(-(self.bias_v + np.sum(np.dot(hidden_minibatch, self.weight_vh)))))
+            p = 1/(1+np.exp(-(self.bias_v + (np.dot(hidden_minibatch, np.transpose(self.weight_vh))))))
         
-        return np.zeros((n_samples,self.ndim_visible)), np.zeros((n_samples,self.ndim_visible))
+            #rand = np.random.random(p.shape)
+            #h = np.zeros((n_samples,self.ndim_hidden))
+            #v = np.ceil(p-rand)
+            v = sample_binary(p)
+            #pass
+        return p, v
+        #return np.zeros((n_samples,self.ndim_visible)), np.zeros((n_samples,self.ndim_visible))
 
 
     
