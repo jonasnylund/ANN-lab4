@@ -88,6 +88,9 @@ class RestrictedBoltzmannMachine():
             
             for k in range(1):
                 p, v_n = self.get_v_given_h(h_n)
+                if self.is_top:
+                    v_n[:,-10:] = batch_data[:,-10:]
+                
                 p, h_n = self.get_h_given_v(v_n)
             
             self.update_params(batch_data, h_0, v_n, h_n)
@@ -173,17 +176,23 @@ class RestrictedBoltzmannMachine():
 
         n_samples = hidden_minibatch.shape[0]
 
-        p = 1/(1+np.exp(-(self.bias_v + np.dot(hidden_minibatch, self.weight_vh.T))))
+        p = (self.bias_v + np.dot(hidden_minibatch, self.weight_vh.T))
 
         if self.is_top:
-
-            v1 = sample_binary(p[:, :-self.n_labels])
-            v2 = softmax(p[:, -self.n_labels:])
+            p_lbls = p[:, -self.n_labels:]
+            p_nodes = 1/(1+np.exp(-p[:, :-self.n_labels]))
+            p = np.concatenate((p_nodes,p_lbls), axis=1)
+            
+            
+            
+            v1 = sample_binary(p_nodes)
+            v2 = softmax(p_lbls)
+            #print("p labl inside rbm.py {}".format(p[:, -self.n_labels:]))
 
             v = np.concatenate((v1,v2), axis=1)
             
         else:
-                        
+            p=  1/(1+np.exp(-p))
             v = sample_binary(p)
 
         return p, v
@@ -258,10 +267,7 @@ class RestrictedBoltzmannMachine():
             # this case should never be executed : when the RBM is a part of a DBN and is at the top, it will have not have directed connections.
             # Appropriate code here is to raise an error (replace pass below)
             
-            v1 = sample_binary(p[:n_samples-self.n_labels])
-            v2 = softmax(p[n_samples-self.n_labels:])
-
-            v = np.concatenate((v1,v2))
+            raise("TOP is directed = not allowed")
             
         else:
                         
