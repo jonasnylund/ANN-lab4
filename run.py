@@ -11,58 +11,58 @@ if __name__ == "__main__":
     
     ''' restricted boltzmann machine '''
     
-    print ("\nStarting a Restricted Boltzmann Machine..")
+    # print ("\nStarting a Restricted Boltzmann Machine..")
     
-    rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
-                                      ndim_hidden=200,
-                                      is_bottom=True,
-                                      image_size=image_size,
-                                      is_top=False,
-                                      n_labels=10,
-                                      batch_size=20
-     )
+    # rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
+    #                                   ndim_hidden=200,
+    #                                   is_bottom=True,
+    #                                   image_size=image_size,
+    #                                   is_top=False,
+    #                                   n_labels=10,
+    #                                   batch_size=20
+    #  )
     
-    rbm.cd1(visible_trainset=train_imgs[:,:], n_iterations=4000)
+    # rbm.cd1(visible_trainset=train_imgs[:,:], n_iterations=4000)
     
-    K = 1
+    # K = 1
 
-    for iii in range(5):
+    # for iii in range(5):
     
-	    img = test_imgs[20+iii,:][np.newaxis,:]
-	    # print(img.shape)
-	    h_n = rbm.get_h_given_v(img)[1]
+	   #  img = test_imgs[20+iii,:][np.newaxis,:]
+	   #  # print(img.shape)
+	   #  h_n = rbm.get_h_given_v(img)[1]
 	    
-	    for k in range(K):
-	        v_n, _ = rbm.get_v_given_h(h_n)
-	        _, h_n = rbm.get_h_given_v(v_n)
+	   #  for k in range(K):
+	   #      v_n, _ = rbm.get_v_given_h(h_n)
+	   #      _, h_n = rbm.get_h_given_v(v_n)
 	    
-	    out = rbm.get_v_given_h(h_n)[0]
+	   #  out = rbm.get_v_given_h(h_n)[0]
 	    
-	    plt.subplot(2,5,iii+1)
-	    plt.imshow(img.reshape((28,28)))
-	    plt.subplot(2,5,iii+5+1)
-	    plt.imshow(out.reshape((28,28)))
+	   #  plt.subplot(2,5,iii+1)
+	   #  plt.imshow(img.reshape((28,28)))
+	   #  plt.subplot(2,5,iii+5+1)
+	   #  plt.imshow(out.reshape((28,28)))
         
-    plt.savefig("testimg_rbm")
+    # plt.savefig("testimg_rbm")
 
 
     ''' deep- belief net '''
 
-    # print ("\nStarting a Deep Belief Net..")
+    print ("\nStarting a Deep Belief Net..")
     
-    # dbn = DeepBeliefNet(sizes={"vis":image_size[0]*image_size[1], "hid":500, "pen":500, "top":2000, "lbl":10},
-    #                     image_size=image_size,
-    #                     n_labels=10,
-    #                     batch_size=10
-    # )
+    dbn = DeepBeliefNet(sizes={"vis":image_size[0]*image_size[1], "hid":500, "pen":500, "top":2000, "lbl":10},
+                        image_size=image_size,
+                        n_labels=10,
+                        batch_size=10
+    )
     
-    # ''' greedy layer-wise training '''
+    ''' greedy layer-wise training '''
 
-    # dbn.train_greedylayerwise(vis_trainset=train_imgs, lbl_trainset=train_lbls, n_iterations=5000)
+    dbn.train_greedylayerwise(vis_trainset=train_imgs, lbl_trainset=train_lbls, n_iterations=5000)
 
-    # # dbn.recognize(train_imgs[:10000], train_lbls)
+    # dbn.recognize(train_imgs[:10000], train_lbls)
     
-    # dbn.recognize(test_imgs, test_lbls)
+    dbn.recognize(test_imgs, test_lbls)
 
     # for digit in range(10):
     #     digit_1hot = np.zeros(shape=(1,10))

@@ -126,10 +126,15 @@ class RestrictedBoltzmannMachine():
            all args have shape (size of mini-batch, size of respective layer)
         """
 
-        self.delta_bias_v = np.sum(v_0 - v_k)
+
+        self.delta_bias_v = np.sum(v_0 - v_k, axis=0)
         self.delta_weight_vh = np.dot(np.transpose(v_0),h_0) - np.dot(np.transpose(v_k),h_k)
-        self.delta_bias_h = np.sum(h_0 - h_k)
+        self.delta_bias_h = np.sum(h_0 - h_k, axis=0)
         
+        # if(self.is_top):
+        #     print("weight_vh:", self.delta_weight_vh)
+        #     print("bias v:", self.delta_bias_v)
+        #     print("bias h:", self.delta_bias_h)
         #self.delta_bias_v += 0
         #self.delta_weight_vh += 0
         #self.delta_bias_h += 0

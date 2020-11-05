@@ -75,8 +75,8 @@ class DeepBeliefNet():
 
         for minibatch, labels in zip(np.array_split(true_img, n_samples//1000 + 1), np.array_split(true_lbl, n_samples//1000 +1)):
 
-            _, h1 = self.rbm_stack["vis--hid"].get_h_given_v_dir(minibatch)
-            _, h2 = self.rbm_stack["hid--pen"].get_h_given_v_dir(h1)
+            h1, _ = self.rbm_stack["vis--hid"].get_h_given_v_dir(minibatch)
+            h2, _ = self.rbm_stack["hid--pen"].get_h_given_v_dir(h1)
             
             # print("h2: {}".format(h2.shape))
 
@@ -89,11 +89,12 @@ class DeepBeliefNet():
 
                 v0 = v.copy();
                 _, h = self.rbm_stack["pen+lbl--top"].get_h_given_v(v)
-                _, v = self.rbm_stack["pen+lbl--top"].get_v_given_h(h)
-                if(first):
+                v, _ = self.rbm_stack["pen+lbl--top"].get_v_given_h(h)
+
+                if(False):
                     print(np.linalg.norm(h), np.linalg.norm(v))
                     print(iii, np.linalg.norm(v0-v))
-                # print(lbl[0,:], labels[0,:])
+                    print(lbl[0,:], labels[0,:])
                 lbl = v[:,-10:]
                 # print(lbl)
             
@@ -189,7 +190,7 @@ class DeepBeliefNet():
             self.savetofile_rbm(loc="trained_rbm",name="vis--hid")
 
             print ("training hid--pen")
-            _, hid_trainset = self.rbm_stack["vis--hid"].get_h_given_v(vis_trainset)
+            hid_trainset, _ = self.rbm_stack["vis--hid"].get_h_given_v(vis_trainset)
 
             print("Norm hidden trainset", np.linalg.norm(hid_trainset))
 
@@ -201,7 +202,7 @@ class DeepBeliefNet():
             self.savetofile_rbm(loc="trained_rbm",name="hid--pen")            
 
             print ("training pen+lbl--top")
-            _, pen_trainset = self.rbm_stack["hid--pen"].get_h_given_v(hid_trainset)
+            pen_trainset, _  = self.rbm_stack["hid--pen"].get_h_given_v(hid_trainset)
 
             print("Norm pen trainset", np.linalg.norm(pen_trainset))
             penlbl_trainset = np.concatenate((pen_trainset, lbl_trainset), axis=1)
