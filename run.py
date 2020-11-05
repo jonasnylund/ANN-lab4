@@ -11,7 +11,7 @@ if __name__ == "__main__":
     
     ''' restricted boltzmann machine '''
     
-    # print ("\nStarting a Restricted Boltzmann Machine..")
+    print ("\nStarting a Restricted Boltzmann Machine..")
     
     # rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
     #                                   ndim_hidden=200,
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     #                                   batch_size=20
     #  )
     
-    # rbm.cd1(visible_trainset=train_imgs[:,:], n_iterations=4000)
+    # rbm.cd1(visible_trainset=train_imgs[:,:], n_iterations=10000)
     
     # K = 1
 
@@ -58,16 +58,22 @@ if __name__ == "__main__":
     
     ''' greedy layer-wise training '''
 
-    dbn.train_greedylayerwise(vis_trainset=train_imgs, lbl_trainset=train_lbls, n_iterations=5000)
+    dbn.train_greedylayerwise(vis_trainset=train_imgs, lbl_trainset=train_lbls, n_iterations=10000)
 
-    # dbn.recognize(train_imgs[:10000], train_lbls)
-    
-    dbn.recognize(test_imgs, test_lbls)
+    # for i in range(25):
+    # 	ax = plt.subplot(5,5,i+1);
+    # 	plt.imshow(test_imgs[i, :].reshape(image_size));
+    # 	plt.title("t: {} p: {}".format(np.argmax(test_lbls[i,:]), np.argmax(dbn.recognize(test_imgs[i, :][np.newaxis,:], test_lbls[i,:][np.newaxis,:]))))
+    # plt.tight_layout();
+    # plt.show()
 
-    # for digit in range(10):
-    #     digit_1hot = np.zeros(shape=(1,10))
-    #     digit_1hot[0,digit] = 1
-    #     dbn.generate(digit_1hot, name="rbms")
+    # dbn.recognize(train_imgs[:10000], train_lbls[:10000])
+    # dbn.recognize(test_imgs, test_lbls)
+
+    for digit in range(10):
+        digit_1hot = np.zeros(shape=(1,10))
+        digit_1hot[0,digit] = 1
+        dbn.generate(digit_1hot, name="rbms")
 
     ''' fine-tune wake-sleep training '''
 
