@@ -82,18 +82,20 @@ class RestrictedBoltzmannMachine():
 
             it_mod = int(np.mod(it,visible_trainset.shape[0]/self.batch_size))
             batch_data = visible_trainset[it_mod*self.batch_size:(it_mod+1)*self.batch_size]
+            
             p, h_0 = self.get_h_given_v(batch_data)
             h_n = h_0
             v_n = batch_data
             
             for k in range(1):
-                p, v_n = self.get_v_given_h(h_n)
-                if self.is_top:
-                    v_n[:,-10:] = batch_data[:,-10:]
+                v_p, v_n = self.get_v_given_h(h_n)
+
+                # if self.is_top:
+                #     v_n[:,-10:] = batch_data[:,-10:]
                 
-                p, h_n = self.get_h_given_v(v_n)
+                h_p, h_n = self.get_h_given_v(v_p)
             
-            self.update_params(batch_data, h_0, v_n, h_n)
+            self.update_params(batch_data, h_0, v_p, h_p)
             
             # visualize once in a while when visible layer is input images
             
@@ -135,6 +137,8 @@ class RestrictedBoltzmannMachine():
         self.bias_v +=  self.learning_rate*self.delta_bias_v
         self.weight_vh +=  self.learning_rate*self.delta_weight_vh
         self.bias_h +=  self.learning_rate*self.delta_bias_h
+
+        # print(np.sum(self.delta_weight_vh))
         
         return
 
@@ -179,20 +183,18 @@ class RestrictedBoltzmannMachine():
         p = (self.bias_v + np.dot(hidden_minibatch, self.weight_vh.T))
 
         if self.is_top:
-            p_lbls = p[:, -self.n_labels:]
             p_nodes = 1/(1+np.exp(-p[:, :-self.n_labels]))
-            p = np.concatenate((p_nodes,p_lbls), axis=1)
-            
-            
-            
+
             v1 = sample_binary(p_nodes)
-            v2 = softmax(p_lbls)
-            #print("p labl inside rbm.py {}".format(p[:, -self.n_labels:]))
+            v2 = softmax(p[:, -self.n_labels:])
+
+            p_lbls = v2
+            p = np.concatenate((p_nodes,p_lbls), axis=1)
 
             v = np.concatenate((v1,v2), axis=1)
             
         else:
-            p=  1/(1+np.exp(-p))
+            p = 1/(1+np.exp(-p))
             v = sample_binary(p)
 
         return p, v
@@ -262,16 +264,10 @@ class RestrictedBoltzmannMachine():
             Then, for both parts, use the appropriate activation function to get probabilities and a sampling method \
             to get activities. The probabilities as well as activities can then be concatenated back into a normal visible layer.
             """
-            
-            # [TODO TASK 4.2] Note that even though this function performs same computation as 'get_v_given_h' but with directed connections,
-            # this case should never be executed : when the RBM is a part of a DBN and is at the top, it will have not have directed connections.
-            # Appropriate code here is to raise an error (replace pass below)
-            
+
             raise("TOP is directed = not allowed")
             
         else:
-                        
-            # [TODO TASK 4.2] performs same computaton as the function 'get_v_given_h' but with directed connections (replace the pass and zeros below)             
 
             v = sample_binary(p)
 

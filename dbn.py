@@ -78,19 +78,28 @@ class DeepBeliefNet():
             _, h1 = self.rbm_stack["vis--hid"].get_h_given_v_dir(minibatch)
             _, h2 = self.rbm_stack["hid--pen"].get_h_given_v_dir(h1)
             
-            print("h2: {}".format(h2.shape))
+            # print("h2: {}".format(h2.shape))
 
             lbl = np.ones(labels.shape)/10.
             v = np.concatenate((h2, lbl), axis=1)
             
             #print("h+lbl: {}".format(v.shape))
             #print(v[:,5])
-            for _ in range(self.n_gibbs_recog):
-                p, h = self.rbm_stack["pen+lbl--top"].get_h_given_v(v)
-                p, v = self.rbm_stack["pen+lbl--top"].get_v_given_h(h)
+            for iii in range(self.n_gibbs_recog):
+
+                v0 = v.copy();
+                _, h = self.rbm_stack["pen+lbl--top"].get_h_given_v(v)
+                _, v = self.rbm_stack["pen+lbl--top"].get_v_given_h(h)
+                if(first):
+                    print(np.linalg.norm(h), np.linalg.norm(v))
+                    print(iii, np.linalg.norm(v0-v))
+                # print(lbl[0,:], labels[0,:])
                 lbl = v[:,-10:]
-                print(lbl)
+                # print(lbl)
             
+            # v, _ = self.rbm_stack["pen+lbl--top"].get_v_given_h(h)
+            # lbl = v[:,-10:]
+
             predicted_lbl = lbl if first else np.concatenate((predicted_lbl, lbl), axis=0)
             
             first = False
@@ -121,8 +130,8 @@ class DeepBeliefNet():
 
         # [TODO TASK 4.2] fix the label in the label layer and run alternating Gibbs sampling in the top RBM. From the top RBM, drive the network \ 
         # top to the bottom visible layer (replace 'vis' from random to your generated visible layer).
-        print(n_sample)
-        print(self.rbm_stack["pen+lbl--top"].ndim_visible)
+        # print(n_sample)
+        # print(self.rbm_stack["pen+lbl--top"].ndim_visible)
         v = np.random.rand(n_sample,self.rbm_stack["pen+lbl--top"].ndim_visible)
         v[:,-10:] = true_lbl
         
@@ -167,29 +176,34 @@ class DeepBeliefNet():
             self.loadfromfile_rbm(loc="trained_rbm",name="pen+lbl--top")        
 
         except IOError :
-
-            # [TODO TASK 4.2] use CD-1 to train all RBMs greedily
         
+
+
             print ("training vis--hid")
+            print("Norm vis trainset", np.linalg.norm(vis_trainset))
             self.rbm_stack["vis--hid"].cd1(visible_trainset=vis_trainset, n_iterations=n_iterations)
             """ 
             CD-1 training for vis--hid 
 
             """            
-            #self.savetofile_rbm(loc="trained_rbm",name="vis--hid")
+            self.savetofile_rbm(loc="trained_rbm",name="vis--hid")
 
             print ("training hid--pen")
-            hid_trainset,_ = self.rbm_stack["vis--hid"].get_h_given_v(vis_trainset)
+            _, hid_trainset = self.rbm_stack["vis--hid"].get_h_given_v(vis_trainset)
+
+            print("Norm hidden trainset", np.linalg.norm(hid_trainset))
 
             self.rbm_stack["hid--pen"].cd1(visible_trainset=hid_trainset, n_iterations=n_iterations)
             """ 
             CD-1 training for hid--pen 
             """            
             self.rbm_stack["vis--hid"].untwine_weights()            
-            #self.savetofile_rbm(loc="trained_rbm",name="hid--pen")            
+            self.savetofile_rbm(loc="trained_rbm",name="hid--pen")            
 
             print ("training pen+lbl--top")
-            pen_trainset, _ = self.rbm_stack["hid--pen"].get_h_given_v(hid_trainset)
+            _, pen_trainset = self.rbm_stack["hid--pen"].get_h_given_v(hid_trainset)
+
+            print("Norm pen trainset", np.linalg.norm(pen_trainset))
             penlbl_trainset = np.concatenate((pen_trainset, lbl_trainset), axis=1)
 
             self.rbm_stack["pen+lbl--top"].cd1(visible_trainset=penlbl_trainset, n_iterations=n_iterations)
@@ -197,7 +211,7 @@ class DeepBeliefNet():
             CD-1 training for pen+lbl--top 
             """
             self.rbm_stack["hid--pen"].untwine_weights()
-            #self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")            
+            self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")            
 
         return    
 
